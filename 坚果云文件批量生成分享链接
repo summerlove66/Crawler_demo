@@ -1,0 +1,61 @@
+#coding: utf8
+import sys
+
+reload(sys)
+sys.setdefaultencoding('utf8')
+import  requests
+import time
+import json
+import mysql.connector
+from  multiprocessing.dummy import Pool
+
+
+global conn
+conn =mysql.connector.connect(database='test3',user ='root',password ='123',charset='utf8mb4')
+
+global cur
+cur =conn.cursor()
+cur.execute('create table if not exists wanghong (name VARCHAR (500), link VARCHAR (1000))')
+
+Cookies ={'Cookie':'warningShown=true; tipShown=true; any=0; sch=bdcpc_nutstore_off; Hm_lvt_0e129db6bd37dbb62de625ceee8740eb=1469273225,1469284488,1469285440,1469293567; Hm_lpvt_0e129db6bd37dbb62de625ceee8740eb=1469293567; umn=1034002766%40qq.com; ta=NdB7cKzGA5O59HLZdT0gLarWR9YPnvc9c0qYBZrG4qI%3D'}
+
+def timeprocess():
+    tj =''.join(str(time.time()).split('.'))[:13]
+    return tj
+
+def getsrc():
+    res =requests.get('https://www.jianguoyun.com/d/ajax/browse/?sndId=c07b2a&sndMagic=60fda33f1b6cbd6e&_={}'.format(timeprocess()),cookies=Cookies)
+    html = res.text
+    jd = json.loads(html)
+    for ele  in  jd['contents']:
+       yield ele['name']
+
+
+def getlink(filename):
+    s =requests.session()  
+    #  有些图片因为文件名的问题，会出现首次无法解。
+    try:
+        url = 'https://www.jianguoyun.com/d/ajax/pubInfo?type=file&sndId=c07b2a&sndMagic=60fda33f1b6cbd6e'
+        param={'_':timeprocess(),'path':'/{}'.format(filename)}
+        res =s.get(url ,params=param,cookies=Cookies)
+
+     except:
+        url1='https://www.jianguoyun.com/d/ajax/fileops/pub?sndId=c07b2a&sndMagic=60fda33f1b6cbd6e'
+        data={'path':'/{}'.format(filename),'version':'1'  ,'acl_list':'','disable_download':'false','enable_upload':'false'}
+        res =s.get(url1,data =data,cookies =Cookies)
+
+    js= res.text
+    try:
+        jd =json.loads(js)
+        return [filename,jd['url']]
+    except:
+       return [filename,'']
+
+
+if __name__ == '__main__':
+    pool =Pool(4)
+    for  i  in pool.map(getlink ,getsrc()):
+        cur.execute('insert into wanghong() values(%s,%s)', list(i))
+
+    conn.commit()
+    conn.close()
