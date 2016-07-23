@@ -1,4 +1,3 @@
-```
 # coding:utf8
 import sys
 reload(sys)
@@ -40,7 +39,6 @@ if __name__ == '__main__':
     map(getart,link_list)
     conn.commit()
     conn.close()
-```
 
 
 
