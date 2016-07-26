@@ -1,0 +1,61 @@
+import requests
+from  multiprocessing.dummy import Pool
+import threading
+import queue
+import time
+
+global url_list
+url_list = ['http://hz.ganji.com/ershoubijibendiannao/o{}/'.format(i) for i in range(1, 10)]  #赶集网二手笔记本前9页
+
+Queue = queue.Queue()
+
+
+def readit(link):
+    res = requests.get(link)
+    print(res.url)
+
+
+def normal():
+    start = time.time()
+    for host in url_list:
+        readit(host)
+    print('第一种for循环种花', time.time() - start)
+
+#multiprocessing.dummy.Pool
+def poolmethod():
+    pool = Pool(9)
+    start = time.time()
+    pool.map(readit, url_list)
+    print('第二种Pool线程池花', time.time() - start)
+
+#threading +queue多线程
+class MyThread(threading.Thread):
+    def __init__(self, Queue):
+        threading.Thread.__init__(self)
+        self.Queue = Queue
+
+    def run(self):
+        while True:
+            host = self.Queue.get()
+            readit(host)
+            self.Queue.task_done()
+
+
+def queuemethod():
+    start = time.time()
+    for i in range(9):
+        t = MyThread(Queue)
+        t.setDaemon(True)
+
+        t.start()
+    for host in url_list:
+        Queue.put(host)
+    Queue.join()
+    print('第三种多线程queue队列', time.time() - start)
+
+
+
+if __name__ == '__main__':
+    normal()
+    poolmethod()
+    queuemethod()
