@@ -1,0 +1,19 @@
+import requests
+import socket
+import socks
+
+
+# 1.最简单的代理方式
+proxies = {
+    "http": "http://52.201.155.222:3128",
+    "https": "http://52.201.155.222:3128"
+}
+
+r = requests.get("http://icanhazip.com", proxies=proxies)
+print (r.text)  #直接当前打印IP 检查是否成功代理
+
+#2.socks 代理
+socks.set_default_proxy(socks.SOCKS5,'localhost',9150)  # 与tor通信
+socket.socket =socks.socksocket
+r = requests.get('http://icanhazip.com')
+print(r.text)
