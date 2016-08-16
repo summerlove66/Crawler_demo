@@ -3,7 +3,7 @@ import socket
 import socks
 
 
-# 1.最简单的代理方式
+# 1.最简单的ip代理方式
 proxies = {
     "http": "http://52.201.155.222:3128",
     "https": "http://52.201.155.222:3128"
