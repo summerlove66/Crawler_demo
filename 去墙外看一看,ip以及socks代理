@@ -17,3 +17,33 @@ socks.set_default_proxy(socks.SOCKS5,'localhost',9150)  # 与tor通信
 socket.socket =socks.socksocket
 r = requests.get('http://icanhazip.com')
 print(r.text)
+
+
+#3.代理验证 
+class Proxy(object):
+    def __init__(self,poxy,port):
+        self.ip =poxy
+        self.port =port
+
+ #报错 以及请求 非200到300的 一律定义为False
+    def judge(self,site):
+
+        proxie={"http":'http://{}:{}'.format(self.ip,self.port)}
+        try:
+            r  = requests.get(site,proxies =proxie ,timeout =20 )
+
+            if  200 <= r.status_code <300:
+                return True
+            else:
+                return False
+        except :
+            return False
+
+    def judge_in(self):    #国内ip 这里用百度首页验证
+        print( self.judge('http://www.baidu.com'))
+        
+    def judge_out(self):    #国外ip 用google 去验证
+        print (self.judge('http://www.google.com.sg/')) 
+
+a =Proxy('112.225.180.109',8118)
+a.judge_in()
