@@ -1,0 +1,62 @@
+import requests
+from bs4 import BeautifulSoup
+from  multiprocessing.dummy import Pool
+from urllib.request import urlretrieve
+import json
+import socket
+import time
+from urllib.parse import quote
+
+socket.setdefaulttimeout(5.0)
+
+k = 1
+
+
+def search_img(ad, num):  # 参数 为关键词 和翻页数目
+    ad = quote(ad)
+    num = 10 * int(num)  # 浏览知乎的时候  每点一次更多 参数就加10  所以这里*10
+    url = 'https://www.zhihu.com/search?type=content&q={}'.format(ad)
+    global headers
+    headers = {
+        'Host': 'www.zhihu.com',
+        'Referer': 'https://www.zhihu.com/search?type=content&q={}'.format(ad),
+        'Upgrade-Insecure-Requests': '1',
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/50.0.2661.87 Safari/537.'
+
+    }
+
+    for i in range(0, num, 10):
+        res1 = requests.get('https://www.zhihu.com/r/search?q={}&type=content&offset={}'.format(ad, i),
+                            headers=headers)
+        jd = json.loads(res1.text)
+        html1 = ''.join(jd['htmls'])
+        if html1:  # 当num 超过 关键词实际搜索页时 html1 为空
+            bs = BeautifulSoup(html1, 'lxml')
+            for link in bs.select('.title a'):
+                yield 'https://www.zhihu.com' + link.get('href')
+        else:
+            break
+
+
+def getimg(l):
+    global k
+
+    res3 = requests.get(l, headers=headers)
+
+    bs = BeautifulSoup(res3.text, 'lxml')
+    for ele in bs.select("img.lazy"):
+        try:
+            img_url = ele.get('data-original')
+            urlretrieve(img_url, 'F:\lvyou\{}.jpg'.format(k))  # 运行程序前 先确保 本机存储 的文件夹已经建立
+            time.sleep(1)
+            print('{}.download'.format(k), img_url)
+        except Exception as e:
+
+            continue
+
+        k += 1
+
+
+if __name__ == '__main__':
+    pool = Pool(4)
+    pool.map(getimg, search_img('西藏', 5))  # 搜索词 ，翻页数目
