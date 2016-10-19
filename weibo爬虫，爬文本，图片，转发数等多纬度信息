@@ -1,0 +1,81 @@
+import json
+import time
+import re
+import pymongo
+import itertools
+import requests
+import random
+
+
+
+conn = pymongo.MongoClient()
+db =conn.weibo
+post_info = db.ergeng
+k=0
+
+def format_time(ts):
+    timearray = time.localtime(ts)
+    time_str =time.strftime('%Y-%m-%d %H:%M:%S',timearray)
+    time_list = time_str.split(' ')
+    return  time_list
+
+
+
+def get_weibo_url(id,redo=2):
+    for i in itertools.count(0):
+        print(i)
+        try:
+            url = 'http://m.weibo.cn/page/json?containerid={}_-_WEIBO_SECOND_PROFILE_WEIBO&page={}'.format(id,i)
+
+            res= requests.get(url)
+            html = res.text
+            time.sleep(random.random())
+            jd = json.loads(html)
+
+        except Exception as e:
+            time.sleep(5*random.random())
+            print(i)
+            print(e )
+            if redo>1:
+                redo =redo-1
+                get_weibo_url(id,redo)
+
+        if jd['cards'][0]['mod_type'] =='mod/pagelist':
+
+
+            yield jd
+        else:
+            break
+
+
+def get_weibo_cont(jd):
+
+    item={}
+    for ele in jd['cards'][0]['card_group']:
+        blog=ele['mblog']
+        item['text'] = re.sub('<.*?>','',blog['text'])
+        try:
+            item['img']=blog.get('bmiddle_pic')
+        except AttributeError:
+            item['img']=''
+        try:
+            item['video']=blog.get('page_info').get('media_info').get('h5_url')
+        except AttributeError:
+            item['video']=''
+        item['comments']=blog['comments_count']
+        ts =blog['created_timestamp']
+        item['year_month'] =format_time(ts)[0]
+        item['hour'] =format_time(ts)[1]
+        item['like']=blog.get('like_count')
+        item['reposts']=blog['reposts_count']
+        global k
+        item['_id']=k
+        post_info.insert(item)
+        k+=1
+
+
+if __name__ == '__main__':
+    for i in get_weibo_url(1005055497993620):   #这里是  二更的视频 的id
+        get_weibo_cont(i)
+
+
