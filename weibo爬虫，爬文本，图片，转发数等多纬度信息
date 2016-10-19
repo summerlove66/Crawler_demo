@@ -75,7 +75,7 @@ def get_weibo_cont(jd):
 
 
 if __name__ == '__main__':
-    for i in get_weibo_url(1005055497993620):   #这里是  二更的视频 的id
+    for i in get_weibo_url(1005055497993620):   #这里是  二更的视频 的id，数据 http://pan.baidu.com/s/1i5a3Dwp
         get_weibo_cont(i)
 
 
