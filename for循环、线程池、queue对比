@@ -52,6 +52,13 @@ def queuemethod():
         Queue.put(host)
     Queue.join()
     print('第三种多线程queue队列', time.time() - start)
+    
+    
+def coroutine_method():
+    a =time.time()
+    gevent.joinall([gevent.spawn(readit ,i)  for i in url_list ])
+    print(time.time() -a )
+
 
 
 
@@ -59,3 +66,5 @@ if __name__ == '__main__':
     normal()
     poolmethod()
     queuemethod()
+    coroutine_method()
+    
